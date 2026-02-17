@@ -28,7 +28,7 @@
 
 ### インストール
 ```bash
-git clone [https://github.com/akinori-ito/jp2conlang.git](https://github.com/akinori-ito/jp2conlang.git)
+git clone https://github.com/akinori-ito/jp2conlang.git
 cd jp2conlang
 pip install janome
 ```
