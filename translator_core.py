@@ -33,7 +33,7 @@ class LanguageTranslator:
         """人工言語の元となる統計情報を学習"""
         self.generator.train_from_file(corpus_file)
 
-    def get_translation(self, jp_word):
+    def get_translation(self, jp_word, jp_read):
         """辞書にあれば返し、なければ新しく生成して保存する"""
         cursor = self.conn.cursor()
         cursor.execute("SELECT conlang_word FROM dictionary WHERE japanese_word = ?", (jp_word,))
@@ -43,9 +43,12 @@ class LanguageTranslator:
             return row[0]
         else:
             # 日本語の長さに比例した長さを計算（例：日本語長 * 2 前後）
-            # 最低でも3文字、日本語1文字につき約2文字の人工言語を割り当て
-            gen_length = max(3, math.ceil(len(jp_word) * 2.5))
-            new_word = self.generator.generate_word(gen_length)
+            # 最低でも2文字、日本語1文字につき約2文字の人工言語を割り当て
+            gen_length = max(2, math.ceil(len(jp_read) * 2))
+            while True:
+                new_word = self.generator.generate_word(gen_length)
+                if re.search(r'[aioeo]',new_word):
+                    break
             
             # 辞書に保存
             cursor.execute("INSERT INTO dictionary (japanese_word, conlang_word) VALUES (?, ?)", 
@@ -88,7 +91,7 @@ class LanguageTranslator:
                     # 空白文字などはスキップ
                     if token.surface.strip() == "":
                         continue
-                    word_list.append(self.get_translation(token.surface))
+                    word_list.append(self.get_translation(token.surface,token.reading))
                 
                 # チャンク内の語順を逆転
                 word_list.reverse()
@@ -104,8 +107,7 @@ class LanguageTranslator:
 
 # --- 実行テスト ---
 if __name__ == "__main__":
-    # サンプルコーパス（英語）
-    english_data = "The quick brown fox jumps over the lazy dog. Artificial intelligence creates new worlds."
+    import sys
     
     translator = LanguageTranslator()
     translator.train_generator_from_file("genesis.txt")
@@ -121,6 +123,8 @@ if __name__ == "__main__":
     "われらは、いづれの国家も、自国のことのみに専念して他国を無視してはならないのであつて、政治道徳の法則は、普遍的なものであり、この法則に従ふことは、自国の主権を維持し、他国と対等関係に立たうとする各国の責務であると信ずる。",
     "日本国民は、国家の名誉にかけ、全力をあげてこの崇高な理想と目的を達成することを誓ふ。"]
 
+    if len(sys.argv) > 1:
+        input_text = sys.argv[1:]
     for s in input_text:
         result = translator.translate_sentence(s)
         print(s)
