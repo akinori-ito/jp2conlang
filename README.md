@@ -31,3 +31,6 @@
 git clone [https://github.com/akinori-ito/jp2conlang.git](https://github.com/akinori-ito/jp2conlang.git)
 cd jp2conlang
 pip install janome
+```
+
+Powered by [Gemini](https://gemini.google.com)
