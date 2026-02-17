@@ -33,7 +33,7 @@ cd jp2conlang
 pip install janome
 ```
 
-### 変換例
+## 変換例
 ```
 日本国民は、正義と秩序を基調とする国際平和を誠実に希求し、国権の発動たる戦争と、武力による威嚇又は武力の行使は、国際紛争を解決する手段としては、永久にこれを放棄する。
 gi bechshal cheredne, hi rahourse fo sonedede ot mayseh bromethe then ga andredis ot anderead ga moneye, ga donotham chis downeyse pi andreast, gi hathas pi andephte bandri afteda fromed andephte, gi thande aredentr then fiesseve ot troyseet bromethe, then restit ot cobs fo fromptilpa.
