@@ -2,6 +2,7 @@ import sqlite3
 import math
 from janome.tokenizer import Tokenizer
 from vocabulary_generator import VocabularyGenerator
+import re
 
 class LanguageTranslator:
     def __init__(self, db_path="lang_dict.db", n_gram=3):
@@ -51,23 +52,52 @@ class LanguageTranslator:
                            (jp_word, new_word))
             self.conn.commit()
             return new_word
-
     def translate_sentence(self, sentence):
-        """文章を解析して翻訳（語順逆転ルール適用）"""
-        tokens = self.tokenizer.tokenize(sentence)
+        """
+        文章を句読点で区切り、チャンクごとに翻訳して記号を付与する。
+        """
+        # 句読点の対応表
+        punctuation_map = {
+            "、": ", ",
+            "。": ". ",
+            "！": "! ",
+            "？": "? ",
+            "!": "! ",
+            "?": "? "
+        }
         
-        # 1. 形態素解析して各単語を翻訳
-        translated_words = []
-        for token in tokens:
-            # 助詞や記号も含めて全て翻訳対象とする（または品詞でフィルタリングも可能）
-            jp_word = token.surface
-            con_word = self.get_translation(jp_word)
-            translated_words.append(con_word)
+        # 句読点を保持したまま分割するための正規表現
+        # （）で囲むことで区切り文字自体もリストに残ります
+        chunks = re.split(r'([、。！？!?])', sentence)
         
-        # 2. 語順を逆転させる
-        translated_words.reverse()
+        translated_chunks = []
         
-        return " ".join(translated_words)
+        for chunk in chunks:
+            if not chunk:
+                continue
+            
+            if chunk in punctuation_map:
+                # 句読点そのものの場合は、対応する記号に変換
+                translated_chunks.append(punctuation_map[chunk])
+            else:
+                # 通常のテキスト部分は形態素解析して翻訳
+                tokens = self.tokenizer.tokenize(chunk)
+                
+                word_list = []
+                for token in tokens:
+                    # 空白文字などはスキップ
+                    if token.surface.strip() == "":
+                        continue
+                    word_list.append(self.get_translation(token.surface))
+                
+                # チャンク内の語順を逆転
+                word_list.reverse()
+                translated_chunks.append(" ".join(word_list))
+        
+        # 最後に結合（記号の後の余計な空白を調整）
+        final_text = "".join(translated_chunks).strip()
+        # 文頭を大文字にするなどの処理を加えても良いかもしれません
+        return final_text
 
     def close(self):
         self.conn.close()
